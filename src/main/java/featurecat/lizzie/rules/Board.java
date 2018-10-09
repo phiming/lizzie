@@ -6,6 +6,7 @@ import featurecat.lizzie.analysis.LeelazListener;
 import featurecat.lizzie.analysis.MoveData;
 import java.io.IOException;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
 import java.util.Queue;
@@ -605,23 +606,31 @@ public class Board implements LeelazListener {
       return false;
     }
   }
-
-  // Jump anywhere in the board history tree.  Written for mouse click navigation
-  public void jumpToAnyPosition(BoardHistoryNode targetNode) {
+  /**
+   * Jump anywhere in the board history tree. Written for mouse click navigation
+   *
+   * @param targetHistoryNode history node to be located
+   * @return void
+   */
+  public void jumpToAnyPosition(BoardHistoryNode targetHistoryNode) {
     BoardHistoryNode srcNode, tarNode, prevNode;
 
-    // tar[] to track path from target node to root node
-    // src[] to track path from source node to root node
-    int[] tar = new int[512], src = new int[512];
+    // targetNode[] to track path from target node to root node
+    // sourceNode[] to track path from source node to root node
+    ArrayList<Integer> targetNodeList, sourceNodeList;
+    targetNodeList = new ArrayList<Integer>();
+    sourceNodeList = new ArrayList<Integer>();
 
-    int i = 0, j = 0, k = 0; // i is index for target node, j for source node, k is working variable
+    int targetNodeIndex = 0;
+    int sourceNodeIndex = 0;
+    int workingVariable = 0;
 
     // find path from target node to root node
-    tarNode = targetNode;
+    tarNode = targetHistoryNode;
     prevNode = tarNode.previous();
     while (prevNode != null) {
-      for (k = 0; k < prevNode.numberOfChildren(); k++)
-        if (prevNode.getVariation(k) == tarNode) tar[i++] = k;
+      for (int m = 0; m < prevNode.numberOfChildren(); m++)
+        if (prevNode.getVariation(m) == tarNode) targetNodeList.add(m);
       tarNode = prevNode;
       prevNode = prevNode.previous();
     }
@@ -630,31 +639,38 @@ public class Board implements LeelazListener {
     srcNode = history.getCurrentHistoryNode();
     prevNode = srcNode.previous();
     while (prevNode != null) {
-      for (k = 0; k < prevNode.numberOfChildren(); k++)
-        if (prevNode.getVariation(k) == srcNode) src[j++] = k;
+      for (int m = 0; m < prevNode.numberOfChildren(); m++)
+        if (prevNode.getVariation(m) == srcNode) sourceNodeList.add(m);
       srcNode = prevNode;
       prevNode = prevNode.previous();
     }
 
-    // Compare tar[]  with src[] , and try to find nearest branch
-    for (k = 0; k < Math.min(i, j); k++) {
-      if (tar[i - k - 1] == src[j - k - 1]) continue;
+    // Compare targetNodeList with sourceNodeList, and try to find nearest branch
+    targetNodeIndex = targetNodeList.size();
+    sourceNodeIndex = sourceNodeList.size();
+    for (workingVariable = 0;
+        workingVariable < Math.min(targetNodeIndex, sourceNodeIndex);
+        workingVariable++) {
+      if (targetNodeList.get(targetNodeIndex - workingVariable - 1)
+          == sourceNodeList.get(sourceNodeIndex - workingVariable - 1)) continue;
       break;
     }
 
     // Move to the target node from source node
-    if (k == i) {
+    if (workingVariable == targetNodeIndex) {
       // target node is shorter, just move back
-      for (int m = 0; m < j - k; m++) previousMove();
+      for (int m = 0; m < sourceNodeIndex - workingVariable; m++) previousMove();
 
-    } else if (k == j) {
+    } else if (workingVariable == sourceNodeIndex) {
       // source node is shorter, move forward
-      for (int m = i - k; m > 0; m--) nextVariation(tar[m - 1]);
+      for (int m = targetNodeIndex - workingVariable; m > 0; m--)
+        nextVariation(targetNodeList.get(m - 1));
 
     } else {
       // in the different branchs, must move back first, then move forword
-      for (int m = 0; m < j - k; m++) previousMove();
-      for (int m = i - k; m > 0; m--) nextVariation(tar[m - 1]);
+      for (int m = 0; m < sourceNodeIndex - workingVariable; m++) previousMove();
+      for (int m = targetNodeIndex - workingVariable; m > 0; m--)
+        nextVariation(targetNodeList.get(m - 1));
     }
   }
 

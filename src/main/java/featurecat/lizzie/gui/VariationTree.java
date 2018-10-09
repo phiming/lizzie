@@ -12,14 +12,15 @@ public class VariationTree {
   private int XSPACING;
   private int DOT_DIAM = 11; // Should be odd number
 
-  private ArrayList<Integer> laneUsageList,
-      laneUsageList1; // laneUsageList1 is lane used to cacalate (x,y)
+  private ArrayList<Integer> laneUsageList;
+  private ArrayList<Integer>
+      mouseLaneUsageList; // mouseLaneUsageList is lane used to calculate (x,y)
   private BoardHistoryNode curMove, curMove1;
-  private int posx1, posy1, width1, height1; // Reserve a copy of varaition window axis
+  private int posx1, posy1, width1, height1; // Reserve a copy of variation window axis
 
   public VariationTree() {
     laneUsageList = new ArrayList<Integer>();
-    laneUsageList1 = new ArrayList<Integer>(); // for mouse click event
+    mouseLaneUsageList = new ArrayList<Integer>(); // for mouse click event
   }
 
   public void drawTree(
@@ -173,7 +174,7 @@ public class VariationTree {
     }
     drawTree(g, posx + xoffset, curposy, 0, posy + height, node, 0, true);
   }
-  // Clone from drawTree() method but draw nothing, just caculate (x,y)->BoardNode
+  // Clone from drawTree() method but draw nothing, just calculate (x,y)->BoardNode
   public BoardHistoryNode inSubtree(
       int posx,
       int posy,
@@ -188,17 +189,17 @@ public class VariationTree {
     int lane = startLane;
     // Figures out how far out too the right (which lane) we have to go not to collide with other
     // variations
-    while (lane < laneUsageList1.size()
-        && laneUsageList1.get(lane) <= startNode.getData().moveNumber + depth) {
+    while (lane < mouseLaneUsageList.size()
+        && mouseLaneUsageList.get(lane) <= startNode.getData().moveNumber + depth) {
       // laneUsageList keeps a list of how far down it is to a variation in the different "lanes"
-      laneUsageList1.set(lane, startNode.getData().moveNumber - 1);
+      mouseLaneUsageList.set(lane, startNode.getData().moveNumber - 1);
       lane++;
     }
-    if (lane >= laneUsageList1.size()) {
-      laneUsageList1.add(0);
+    if (lane >= mouseLaneUsageList.size()) {
+      mouseLaneUsageList.add(0);
     }
-    if (variationNumber > 1) laneUsageList1.set(lane - 1, startNode.getData().moveNumber - 1);
-    laneUsageList1.set(lane, startNode.getData().moveNumber);
+    if (variationNumber > 1) mouseLaneUsageList.set(lane - 1, startNode.getData().moveNumber - 1);
+    mouseLaneUsageList.set(lane, startNode.getData().moveNumber);
 
     // At this point, lane contains the lane we should use (the main branch is in lane 0)
 
@@ -237,7 +238,7 @@ public class VariationTree {
     return null;
   }
 
-  // Clone from draw() method but draw nothing, just caculate (x,y)->BoardNode
+  // Clone from draw() method but draw nothing, just calculate (x,y)->BoardNode
   public BoardHistoryNode inVariationTree(int mouseX, int mouseY) {
 
     // check if (x,y) is in the variation window
@@ -250,7 +251,7 @@ public class VariationTree {
 
     int middleY = posy1 + height1 / 2;
     int xoffset = 30;
-    laneUsageList1.clear();
+    mouseLaneUsageList.clear();
 
     curMove1 = Lizzie.board.getHistory().getCurrentHistoryNode();
 
